@@ -183,6 +183,15 @@ router.post(
       // ───────────────────────────────────────
       // Check username separately
       // ───────────────────────────────────────
+      console.log('REGISTER ATTEMPT:', {
+        username,
+        email
+      });
+
+      console.log(
+        'EXISTING USERS:',
+        db.prepare('SELECT id, username, email FROM users').all()
+      );
 
       const existingUsername = db
         .prepare(
