@@ -1,0 +1,115 @@
+<%- include('../partials/header') %>
+
+<div class="watch-container">
+  <div class="watch-main">
+    <!-- Video Player -->
+    <div class="video-player-wrapper" id="video-player-wrapper">
+      <video id="video-player" class="video-player" controls preload="metadata"
+             poster="<%= video.thumbnail ? '/uploads/' + video.thumbnail : '' %>">
+        <source src="/videos/stream/<%= video.filename %>" type="<%= video.mime_type %>">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <!-- Video Info -->
+    <div class="watch-info">
+      <h1 class="watch-title" id="watch-title"><%= video.title %></h1>
+
+      <div class="watch-meta-row">
+        <div class="watch-stats">
+          <span><%= helpers.formatViews(video.views) %></span>
+          <span class="meta-dot">·</span>
+          <span><%= helpers.timeAgo(video.created_at) %></span>
+          <% if (video.visibility === 'private') { %>
+            <span class="badge badge-private">Private</span>
+          <% } %>
+        </div>
+
+        <div class="watch-actions">
+          <% if (isOwner || isAdmin) { %>
+            <a href="/videos/<%= video.id %>/edit" class="btn btn-ghost btn-sm" id="btn-edit-video">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Edit
+            </a>
+            <form action="/videos/<%= video.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to delete this video? This cannot be undone.')">
+              <button type="submit" class="btn btn-danger btn-sm" id="btn-delete-video">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                Delete
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Uploader Info -->
+      <div class="watch-uploader">
+        <a href="/users/<%= video.uploader_id %>" class="uploader-link">
+          <% if (video.avatar) { %>
+            <img src="/uploads/avatars/<%= video.avatar %>" alt="<%= video.username %>" class="uploader-avatar">
+          <% } else { %>
+            <div class="avatar-default avatar-md"><%= video.username.charAt(0).toUpperCase() %></div>
+          <% } %>
+          <div class="uploader-info">
+            <span class="uploader-name"><%= video.username %></span>
+            <span class="uploader-label">Uploader</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Description -->
+      <% if (video.description) { %>
+        <div class="watch-description" id="watch-description">
+          <div class="description-text"><%= video.description %></div>
+        </div>
+      <% } %>
+
+      <!-- File Info -->
+      <div class="watch-file-info">
+        <span><%= helpers.formatFileSize(video.file_size) %></span>
+        <% if (video.duration) { %>
+          <span class="meta-dot">·</span>
+          <span><%= helpers.formatDuration(video.duration) %></span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: More from uploader -->
+  <% if (moreFromUploader.length > 0) { %>
+    <aside class="watch-sidebar">
+      <h3 class="sidebar-title">More from <%= video.username %></h3>
+      <div class="sidebar-videos">
+        <% moreFromUploader.forEach(related => { %>
+          <a href="/videos/<%= related.id %>" class="sidebar-video-card">
+            <div class="sidebar-thumb">
+              <% if (related.thumbnail) { %>
+                <img src="/uploads/<%= related.thumbnail %>" alt="<%= related.title %>" loading="lazy">
+              <% } else { %>
+                <div class="thumb-placeholder thumb-placeholder-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                </div>
+              <% } %>
+              <% if (related.duration) { %>
+                <span class="video-duration video-duration-sm"><%= helpers.formatDuration(related.duration) %></span>
+              <% } %>
+            </div>
+            <div class="sidebar-video-info">
+              <h4><%= helpers.truncate(related.title, 50) %></h4>
+              <p><%= helpers.formatViews(related.views) %> · <%= helpers.timeAgo(related.created_at) %></p>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </aside>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

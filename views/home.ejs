@@ -1,0 +1,91 @@
+<%- include('partials/header') %>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">
+      <% if (search) { %>
+        Search results for "<%= search %>"
+      <% } else { %>
+        Latest Videos
+      <% } %>
+    </h1>
+    <% if (search) { %>
+      <a href="/videos" class="btn btn-ghost">Clear search</a>
+    <% } %>
+  </div>
+
+  <% if (videos.length === 0) { %>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+      </div>
+      <% if (search) { %>
+        <h2>No videos found</h2>
+        <p>Try a different search term or <a href="/videos">browse all videos</a>.</p>
+      <% } else { %>
+        <h2>No videos yet</h2>
+        <p>Be the first to share something!</p>
+        <a href="/videos/upload" class="btn btn-primary" style="margin-top: 1rem;">Upload a video</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="video-grid" id="video-grid">
+      <% videos.forEach(video => { %>
+        <a href="/videos/<%= video.id %>" class="video-card" id="video-card-<%= video.id %>">
+          <div class="video-card-thumb">
+            <% if (video.thumbnail) { %>
+              <img src="/uploads/<%= video.thumbnail %>" alt="<%= video.title %>" loading="lazy">
+            <% } else { %>
+              <div class="thumb-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+            <% } %>
+            <% if (video.duration) { %>
+              <span class="video-duration"><%= helpers.formatDuration(video.duration) %></span>
+            <% } %>
+          </div>
+          <div class="video-card-info">
+            <div class="video-card-avatar">
+              <% if (video.avatar) { %>
+                <img src="/uploads/avatars/<%= video.avatar %>" alt="<%= video.username %>">
+              <% } else { %>
+                <div class="avatar-default avatar-sm"><%= video.username.charAt(0).toUpperCase() %></div>
+              <% } %>
+            </div>
+            <div class="video-card-meta">
+              <h3 class="video-card-title"><%= helpers.truncate(video.title, 60) %></h3>
+              <p class="video-card-channel"><%= video.username %></p>
+              <p class="video-card-stats">
+                <%= helpers.formatViews(video.views) %> · <%= helpers.timeAgo(video.created_at) %>
+              </p>
+            </div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+
+    <% if (totalPages > 1) { %>
+      <nav class="pagination" id="pagination">
+        <% if (currentPage > 1) { %>
+          <a href="/videos?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="pagination-btn">&laquo; Previous</a>
+        <% } %>
+        <div class="pagination-numbers">
+          <% for (let i = 1; i <= totalPages; i++) { %>
+            <a href="/videos?page=<%= i %><%= search ? '&search=' + search : '' %>"
+               class="pagination-num <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+          <% } %>
+        </div>
+        <% if (currentPage < totalPages) { %>
+          <a href="/videos?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="pagination-btn">Next &raquo;</a>
+        <% } %>
+      </nav>
+    <% } %>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

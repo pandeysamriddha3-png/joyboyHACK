@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-avatar-section">
+      <% if (profileUser.avatar) { %>
+        <img src="/uploads/avatars/<%= profileUser.avatar %>" alt="<%= profileUser.username %>" class="profile-avatar">
+      <% } else { %>
+        <div class="avatar-default avatar-lg"><%= profileUser.username.charAt(0).toUpperCase() %></div>
+      <% } %>
+    </div>
+    <div class="profile-info">
+      <div class="profile-name-row">
+        <h1 class="profile-username"><%= profileUser.username %></h1>
+        <% if (profileUser.role === 'admin') { %>
+          <span class="badge badge-admin">Admin</span>
+        <% } %>
+      </div>
+      <% if (profileUser.bio) { %>
+        <p class="profile-bio"><%= profileUser.bio %></p>
+      <% } %>
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-value"><%= videos.length %></span>
+          <span class="stat-label">Videos</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value"><%= helpers.formatViews(totalViews).replace(' views', '') %></span>
+          <span class="stat-label">Total Views</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value"><%= helpers.timeAgo(profileUser.created_at) %></span>
+          <span class="stat-label">Joined</span>
+        </div>
+      </div>
+      <% if (isOwner || isAdmin) { %>
+        <div class="profile-actions">
+          <a href="/users/<%= profileUser.id %>/edit" class="btn btn-ghost btn-sm">Edit Profile</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- User's Videos -->
+  <div class="section-header">
+    <h2><%= isOwner ? 'Your Videos' : profileUser.username + '\'s Videos' %></h2>
+  </div>
+
+  <% if (videos.length === 0) { %>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+      </div>
+      <% if (isOwner) { %>
+        <h3>No videos yet</h3>
+        <p>Start sharing by uploading your first video.</p>
+        <a href="/videos/upload" class="btn btn-primary" style="margin-top: 1rem;">Upload a video</a>
+      <% } else { %>
+        <h3>No public videos</h3>
+        <p>This user hasn't shared any public videos yet.</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="video-grid">
+      <% videos.forEach(video => { %>
+        <a href="/videos/<%= video.id %>" class="video-card">
+          <div class="video-card-thumb">
+            <% if (video.thumbnail) { %>
+              <img src="/uploads/<%= video.thumbnail %>" alt="<%= video.title %>" loading="lazy">
+            <% } else { %>
+              <div class="thumb-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+            <% } %>
+            <% if (video.duration) { %>
+              <span class="video-duration"><%= helpers.formatDuration(video.duration) %></span>
+            <% } %>
+            <% if (video.visibility === 'private') { %>
+              <span class="video-private-badge">Private</span>
+            <% } %>
+          </div>
+          <div class="video-card-info">
+            <div class="video-card-meta" style="margin-left: 0;">
+              <h3 class="video-card-title"><%= helpers.truncate(video.title, 60) %></h3>
+              <p class="video-card-stats">
+                <%= helpers.formatViews(video.views) %> · <%= helpers.timeAgo(video.created_at) %>
+              </p>
+            </div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

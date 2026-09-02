@@ -1,0 +1,127 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Admin Dashboard</h1>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="stat-card-info">
+        <span class="stat-card-value"><%= stats.totalUsers %></span>
+        <span class="stat-card-label">Users</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+      </div>
+      <div class="stat-card-info">
+        <span class="stat-card-value"><%= stats.totalVideos %></span>
+        <span class="stat-card-label">Videos</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <div class="stat-card-info">
+        <span class="stat-card-value"><%= helpers.formatViews(stats.totalViews).replace(' views', '') %></span>
+        <span class="stat-card-label">Total Views</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        </svg>
+      </div>
+      <div class="stat-card-info">
+        <span class="stat-card-value"><%= helpers.formatFileSize(stats.totalStorage) %></span>
+        <span class="stat-card-label">Storage Used</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="section-header" style="margin-top: 2rem;">
+    <h2>Manage Users</h2>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="admin-table" id="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Videos</th>
+          <th>Views</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td>
+              <a href="/users/<%= user.id %>" class="table-user-link">
+                <% if (user.avatar) { %>
+                  <img src="/uploads/avatars/<%= user.avatar %>" alt="<%= user.username %>" class="table-avatar">
+                <% } else { %>
+                  <div class="avatar-default avatar-xs"><%= user.username.charAt(0).toUpperCase() %></div>
+                <% } %>
+                <span><%= user.username %></span>
+              </a>
+            </td>
+            <td class="text-muted"><%= user.email %></td>
+            <td>
+              <% if (user.role === 'admin') { %>
+                <span class="badge badge-admin">Admin</span>
+              <% } else { %>
+                <span class="badge badge-user">User</span>
+              <% } %>
+            </td>
+            <td><%= user.video_count %></td>
+            <td><%= helpers.formatViews(user.total_views).replace(' views', '') %></td>
+            <td class="text-muted"><%= helpers.timeAgo(user.created_at) %></td>
+            <td>
+              <% if (user.id !== currentUser.id) { %>
+                <div class="table-actions">
+                  <form action="/admin/users/<%= user.id %>/role" method="POST" class="inline-form">
+                    <button type="submit" class="btn btn-ghost btn-xs" title="<%= user.role === 'admin' ? 'Demote to user' : 'Promote to admin' %>">
+                      <%= user.role === 'admin' ? '⬇ Demote' : '⬆ Promote' %>
+                    </button>
+                  </form>
+                  <form action="/admin/users/<%= user.id %>/delete" method="POST" class="inline-form"
+                        onsubmit="return confirm('Delete user &quot;<%= user.username %>&quot; and ALL their videos? This cannot be undone.')">
+                    <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                  </form>
+                </div>
+              <% } else { %>
+                <span class="text-muted">— You</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
