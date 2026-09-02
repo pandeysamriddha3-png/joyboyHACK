@@ -21,7 +21,7 @@
         <label for="username">Username</label>
         <input type="text" id="username" name="username" placeholder="Choose a username"
                value="<%= typeof formData !== 'undefined' ? formData.username || '' : '' %>"
-               required autofocus minlength="3" maxlength="30" pattern="[a-zA-Z0-9_-]+">
+               required autofocus minlength="3" maxlength="30" pattern="[a-zA-Z0-9_\-]+"
         <span class="form-hint">3–30 characters. Letters, numbers, hyphens, underscores.</span>
       </div>
 
