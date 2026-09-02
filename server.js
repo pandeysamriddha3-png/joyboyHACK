@@ -131,8 +131,10 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start ──
-app.listen(PORT, () => {
-  console.log(`\n  🎬 JoyBoy is running at http://localhost:${PORT}\n`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`\n  🎬 JoyBoy is running on port ${PORT}\n`);
 });
 
 module.exports = app;
