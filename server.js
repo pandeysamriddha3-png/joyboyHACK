@@ -12,7 +12,11 @@ const { attachUser } = require('./middleware/auth');
 const helpers = require('./utils/helpers');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Render runs behind a proxy
+app.set('trust proxy', 1);
+
+const PORT = process.env.PORT || 3000; 
 
 // ── Ensure directories exist ──
 const dirs = [
@@ -59,11 +63,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  }
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+}
 }));
 
 // ── Static files ──
