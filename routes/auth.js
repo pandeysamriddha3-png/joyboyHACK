@@ -2,7 +2,8 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const db = require('../config/database');
+
+const { pool } = require('../config/database');
 
 const router = express.Router();
 
@@ -53,7 +54,7 @@ router.post(
       .withMessage('Password is required.'),
   ],
 
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -66,9 +67,18 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      const user = db
-        .prepare('SELECT * FROM users WHERE email = ?')
-        .get(email);
+      // Find user in Neon PostgreSQL
+      const result = await pool.query(
+        `
+        SELECT *
+        FROM users
+        WHERE LOWER(email) = LOWER($1)
+        LIMIT 1
+        `,
+        [email]
+      );
+
+      const user = result.rows[0];
 
       if (!user) {
         return res.render('auth/login', {
@@ -79,7 +89,8 @@ router.post(
         });
       }
 
-      const passwordMatches = bcrypt.compareSync(
+      // Check password
+      const passwordMatches = await bcrypt.compare(
         password,
         user.password_hash
       );
@@ -95,7 +106,8 @@ router.post(
 
       // Create login session
       req.session.userId = user.id;
-      req.session.successMessage = `Welcome back, ${user.username}!`;
+      req.session.successMessage =
+        `Welcome back, ${user.username}!`;
 
       return res.redirect('/videos');
 
@@ -160,7 +172,7 @@ router.post(
       .withMessage('Passwords do not match.'),
   ],
 
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req);
 
     // Validation failed
@@ -181,25 +193,20 @@ router.post(
 
     try {
       // ───────────────────────────────────────
-      // Check username separately
+      // Check username
       // ───────────────────────────────────────
-      console.log('REGISTER ATTEMPT:', {
-        username,
-        email
-      });
 
-      console.log(
-        'EXISTING USERS:',
-        db.prepare('SELECT id, username, email FROM users').all()
+      const usernameResult = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE LOWER(username) = LOWER($1)
+        LIMIT 1
+        `,
+        [username]
       );
 
-      const existingUsername = db
-        .prepare(
-          'SELECT id FROM users WHERE username = ? COLLATE NOCASE'
-        )
-        .get(username);
-
-      if (existingUsername) {
+      if (usernameResult.rows.length > 0) {
         return res.render('auth/register', {
           title: 'Register',
           errors: [
@@ -213,16 +220,20 @@ router.post(
       }
 
       // ───────────────────────────────────────
-      // Check email separately
+      // Check email
       // ───────────────────────────────────────
 
-      const existingEmail = db
-        .prepare(
-          'SELECT id FROM users WHERE email = ? COLLATE NOCASE'
-        )
-        .get(email);
+      const emailResult = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE LOWER(email) = LOWER($1)
+        LIMIT 1
+        `,
+        [email]
+      );
 
-      if (existingEmail) {
+      if (emailResult.rows.length > 0) {
         return res.render('auth/register', {
           title: 'Register',
           errors: [
@@ -239,12 +250,17 @@ router.post(
       // Hash password
       // ───────────────────────────────────────
 
-      const passwordHash = bcrypt.hashSync(password, 12);
+      const passwordHash = await bcrypt.hash(password, 12);
 
+      // ───────────────────────────────────────
       // First registered account becomes admin
-      const userCount = db
-        .prepare('SELECT COUNT(*) AS count FROM users')
-        .get().count;
+      // ───────────────────────────────────────
+
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::integer AS count FROM users'
+      );
+
+      const userCount = countResult.rows[0].count;
 
       const role = userCount === 0 ? 'admin' : 'user';
 
@@ -252,25 +268,29 @@ router.post(
       // Create user
       // ───────────────────────────────────────
 
-      const result = db
-        .prepare(`
-          INSERT INTO users
-            (username, email, password_hash, role)
-          VALUES
-            (?, ?, ?, ?)
-        `)
-        .run(
+      const insertResult = await pool.query(
+        `
+        INSERT INTO users
+          (username, email, password_hash, role)
+        VALUES
+          ($1, $2, $3, $4)
+        RETURNING id
+        `,
+        [
           username,
           email,
           passwordHash,
-          role
-        );
+          role,
+        ]
+      );
+
+      const userId = insertResult.rows[0].id;
 
       // ───────────────────────────────────────
       // Auto-login
       // ───────────────────────────────────────
 
-      req.session.userId = result.lastInsertRowid;
+      req.session.userId = userId;
 
       req.session.successMessage =
         `Welcome to JoyBoy, ${username}!` +
@@ -281,11 +301,10 @@ router.post(
       return res.redirect('/videos');
 
     } catch (err) {
-
       console.error('Registration error:', err);
 
-      // Handle SQLite UNIQUE errors
-      if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      // PostgreSQL unique violation
+      if (err.code === '23505') {
         return res.render('auth/register', {
           title: 'Register',
           errors: [
