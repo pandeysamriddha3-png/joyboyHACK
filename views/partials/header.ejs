@@ -29,6 +29,12 @@
       </form>
 
       <div class="nav-actions">
+        <button type="button" class="nav-icon-btn mobile-search-btn" id="mobile-search-btn" aria-label="Search videos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </button>
+
         <a href="/videos/upload" class="btn btn-primary btn-upload" id="btn-upload">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -89,6 +95,54 @@
       </div>
     </div>
   </nav>
+
+  <!-- Dedicated Mobile Search Overlay -->
+  <div class="mobile-search-overlay" id="mobile-search-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Search videos">
+    <div class="mobile-search-header">
+      <button type="button" class="mobile-search-back-btn" id="mobile-search-back-btn" aria-label="Close search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+      </button>
+
+      <form action="/videos" method="GET" class="mobile-search-form" id="mobile-search-form">
+        <div class="mobile-search-input-wrap">
+          <svg class="mobile-search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            name="search"
+            class="mobile-search-input"
+            id="mobile-search-input"
+            placeholder="Search videos..."
+            value="<%= typeof search !== 'undefined' ? search : '' %>"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-label="Search query"
+          >
+          <button type="button" class="mobile-search-clear-btn" id="mobile-search-clear-btn" aria-label="Clear search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="mobile-search-body">
+      <div class="mobile-recent-searches" id="mobile-recent-searches" style="display: none;">
+        <div class="recent-searches-header">
+          <span class="recent-searches-title">Recent searches</span>
+          <button type="button" class="recent-clear-all-btn" id="recent-clear-all-btn">Clear all</button>
+        </div>
+        <ul class="recent-searches-list" id="recent-searches-list"></ul>
+      </div>
+    </div>
+  </div>
   <% } %>
 
   <% if (typeof successMessage !== 'undefined' && successMessage) { %>
