@@ -112,11 +112,6 @@ app.use(
 
 // ─────────────────────────────────────────────
 // Sessions
-//
-// TEMPORARY:
-// Still using SQLite for sessions.
-// We'll move sessions to Neon after the
-// users/videos migration is working.
 // ─────────────────────────────────────────────
 
 app.use(
@@ -249,6 +244,87 @@ app.use(
 );
 
 // ─────────────────────────────────────────────
+// STORAGE DIAGNOSTIC
+// ─────────────────────────────────────────────
+//
+// Open:
+// https://joyboyhack.onrender.com/debug/storage
+//
+// This tells us whether uploaded files actually
+// exist on the current Render instance.
+// ─────────────────────────────────────────────
+
+app.get('/debug/storage', (req, res) => {
+  function scanDirectory(directory) {
+    const fullPath = path.join(__dirname, directory);
+
+    if (!fs.existsSync(fullPath)) {
+      return {
+        exists: false,
+        path: fullPath,
+        files: [],
+      };
+    }
+
+    try {
+      const entries = fs.readdirSync(
+        fullPath,
+        { withFileTypes: true }
+      );
+
+      return {
+        exists: true,
+        path: fullPath,
+        count: entries.length,
+        files: entries.map((entry) => ({
+          name: entry.name,
+          type: entry.isDirectory()
+            ? 'directory'
+            : 'file',
+        })),
+      };
+    } catch (error) {
+      return {
+        exists: true,
+        path: fullPath,
+        error: error.message,
+        files: [],
+      };
+    }
+  }
+
+  res.json({
+    ok: true,
+
+    timestamp:
+      new Date().toISOString(),
+
+    hostname:
+      require('os').hostname(),
+
+    cwd:
+      process.cwd(),
+
+    directories: {
+      uploads:
+        scanDirectory('uploads'),
+
+      videos:
+        scanDirectory('uploads/videos'),
+
+      thumbnails:
+        scanDirectory('uploads/thumbnails'),
+
+      avatars:
+        scanDirectory('uploads/avatars'),
+
+      data:
+        scanDirectory('data'),
+    },
+  });
+});
+
+// ─────────────────────────────────────────────
 // Homepage
 // ─────────────────────────────────────────────
 
@@ -327,6 +403,10 @@ async function startServer() {
       () => {
         console.log(
           `\n🎬 JoyBoy is running on port ${PORT}\n`
+        );
+
+        console.log(
+          `📦 Storage debug: http://localhost:${PORT}/debug/storage`
         );
       }
     );
